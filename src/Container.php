@@ -4,7 +4,7 @@ namespace tourze\swoole\yii2;
 
 use ReflectionClass;
 use Yii;
-use yii\base\Object;
+use yii\base\BaseObject;
 
 /**
  * 继承原有的容器, 实现一些额外的逻辑
@@ -266,7 +266,7 @@ class Container extends \yii\di\Container
             }
             // 执行一些配置信息
             Yii::configure($object, $config);
-            if ($object instanceof Object)
+            if ($object instanceof BaseObject)
             {
                 $object->init();
             }
