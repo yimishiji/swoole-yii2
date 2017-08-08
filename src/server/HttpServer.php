@@ -249,7 +249,14 @@ class HttpServer extends Server
         {
             xhprof_enable(XHPROF_FLAGS_MEMORY | XHPROF_FLAGS_CPU);
         }
-
+        
+        //gzip
+        if (isset($this->config['gzip']) && $this->config['gzip']=='on' && method_exists($response, 'gzip')){
+            $gzipLevel =(int)($this->config['gzipLevel']??1);
+            $gzipLevel = min(9, max(1, $gzipLevel));
+            $response->gzip($gzipLevel);
+        }
+        
         $uri = $request->server['request_uri'];
         $file = $this->root . $uri;
         if ($uri != '/' && is_file($file) && pathinfo($file, PATHINFO_EXTENSION) != 'php')
