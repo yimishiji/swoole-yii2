@@ -14,13 +14,14 @@ use Yii;
 use yii\base\ErrorException;
 use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
+use api\components\utils\YMLog;
 
 /**
  * HTTP服务器
  *
  * @package tourze\swoole\yii2\server
  */
-class RpcServer extends Server
+class RpcServer extends HttpServer
 {
     
     /**
@@ -57,64 +58,6 @@ class RpcServer extends Server
      * @var string
      */
     public $sessionKey = 'JSESSIONID';
-    
-    /**
-     * @inheritdoc
-     */
-    public function run($app)
-    {
-        $this->config = is_array($app) ? $app : (array) Yii::$app->params['swooleHttp'][$app];
-        if (isset($this->config['xhprofDebug']))
-        {
-            $this->xhprofDebug = $this->config['xhprofDebug'];
-        }
-        if (isset($this->config['debug']))
-        {
-            $this->debug = $this->config['debug'];
-        }
-        $this->root = $this->config['root'];
-        $this->server = new swoole_http_server($this->config['host'], $this->config['port']);
-        
-        $this->server->on('start', [$this, 'onServerStart']);
-        $this->server->on('shutdown', [$this, 'onServerStop']);
-        
-        $this->server->on('managerStart', [$this, 'onManagerStart']);
-        
-        $this->server->on('workerStart', [$this, 'onWorkerStart']);
-        $this->server->on('workerStop', [$this, 'onWorkerStop']);
-        
-        $this->server->on('request', [$this, 'onRequest']);
-        
-        if (method_exists($this, 'onOpen'))
-        {
-            $this->server->on('open', [$this, 'onOpen']);
-        }
-        if (method_exists($this, 'onClose'))
-        {
-            $this->server->on('close', [$this, 'onClose']);
-        }
-        
-        if (method_exists($this, 'onWsHandshake'))
-        {
-            $this->server->on('handshake', [$this, 'onWsHandshake']);
-        }
-        if (method_exists($this, 'onWsMessage'))
-        {
-            $this->server->on('message', [$this, 'onWsMessage']);
-        }
-        
-        if (method_exists($this, 'onTask'))
-        {
-            $this->server->on('task', [$this, 'onTask']);
-        }
-        if (method_exists($this, 'onFinish'))
-        {
-            $this->server->on('finish', [$this, 'onFinish']);
-        }
-        
-        $this->server->set($this->config['server']);
-        $this->server->start();
-    }
     
     /**
      * Worker启动时触发
@@ -205,7 +148,6 @@ class RpcServer extends Server
         //echo "AsyncTask[$task_id] Finish: $data".PHP_EOL;
     }
     
-    public static $test = 1;
     
     /**
      * 执行请求
@@ -215,36 +157,6 @@ class RpcServer extends Server
      */
     public function onRequest($request, $response)
     {
-        // 测试DI Container性能
-//        $j = 100000;
-//        $s1 = microtime(true);
-//        for ($i=0; $i<$j; $i++)
-//        {
-//            $obj = Yii::createObject('yii\web\Request');
-//        }
-//        $t1 = microtime(true) - $s1;
-//        // 更换新的Container
-//        $s2 = microtime(true);
-//        Yii::$container = new Container();
-//        for ($i=0; $i<$j; $i++)
-//        {
-//            $obj = Yii::createObject('yii\web\Request');
-//        }
-//        $t2 = microtime(true) - $s2;
-//        $response->end(json_encode(['t1' => $t1, 't2' => $t2]));
-//        return;
-        
-        //$id = posix_getpid();
-        //echo "id: $id\n";
-//        $t = '<pre>';
-//        $t .= print_r($_SERVER, true);
-//        $t .= print_r($request, true);
-//        $t .= '</pre>';
-//        $response->end($t);
-//        return;
-        
-        //xdebug_start_trace();
-        
         if ($this->xhprofDebug)
         {
             xhprof_enable(XHPROF_FLAGS_MEMORY | XHPROF_FLAGS_CPU);
@@ -332,16 +244,9 @@ class RpcServer extends Server
             //$app->setUser(clone $this->app->getUser());
             // 部分组件是可以复用的, 所以直接引用
             //$app->setUrlManager($this->app->getUrlManager());
-    
-
+            
             try
             {
-                //$t = '<pre>';
-                //$t .= print_r($_SERVER, true);
-                //$t .= print_r($request, true);
-                //$t .= '</pre>';
-                //$response->end($t);
-                //return;
                 $app->run();
                 $app->afterRun();
             }
@@ -389,5 +294,27 @@ class RpcServer extends Server
             $runId = $xhprofRuns->save_run($xhprofData, 'xhprof_test');
             echo "http://127.0.0.1/xhprof/xhprof_html/index.php?run=" . $runId . '&source=xhprof_test'."\n";
         }
+    }
+    
+    
+    /**
+     * @param swoole_server $server
+     */
+    public function onServerStart($server)
+    {
+        swoole_timer_tick(2000, function() {
+            echo " swoole_timer_tick output time: ".microtime(true)." \n";
+        });
+    
+
+    
+        echo " rpc servicer 304 serverstart";
+        parent::onServerStart($server);
+    }
+    
+    public function onServerStop()
+    {
+        echo " rpc servicer 310 onServerStop";
+        parent::onServerStop();
     }
 }
