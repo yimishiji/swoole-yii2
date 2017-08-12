@@ -2,21 +2,10 @@
 
 namespace tourze\swoole\yii2;
 
+use Yii;
 use swoole_http_request;
 use swoole_http_response;
 use swoole_http_server;
-use tourze\swoole\yii2\web\ErrorHandler;
-use tourze\swoole\yii2\web\Request;
-use tourze\swoole\yii2\web\Response;
-use tourze\swoole\yii2\web\Session;
-use tourze\swoole\yii2\web\User;
-use tourze\swoole\yii2\web\View;
-use Yii;
-use yii\base\BootstrapInterface;
-use yii\base\Controller;
-use yii\base\Event;
-use yii\base\InvalidConfigException;
-use yii\base\Widget;
 
 /**
  * @property swoole_http_request  serverRequest
@@ -26,6 +15,7 @@ use yii\base\Widget;
  */
 class RpcApplication extends Application
 {
+    public $appInit;
     
     /**
      * 初始化流程
@@ -34,14 +24,23 @@ class RpcApplication extends Application
      */
     public function bootstrap()
     {
-        if ( ! static::$webAliasInit)
-        {
-            $request = $this->getRequest();
-            Yii::setAlias('@webroot', dirname($request->getScriptFile()));
-            Yii::setAlias('@web', $request->getBaseUrl());
-            static::$webAliasInit = true;
-        }
+        //if ( ! static::$webAliasInit)
+        //{
+        //    $request = $this->getRequest();
+        //    Yii::setAlias('@webroot', dirname($request->getScriptFile()));
+        //    Yii::setAlias('@web', $request->getBaseUrl());
+        //    static::$webAliasInit = true;
+        //}
         
+        //服务自定义初始化
+        if($this->appInit)
+        {
+            $class = Yii::createObject(['class'=>array_shift($this->appInit)]);
+            $functionName = array_shift($this->appInit);
+            if(method_exists($class, $functionName)){
+                $class->$functionName();
+            }
+        }
         //$this->extensionBootstrap();
         //$this->moduleBootstrap();
     }

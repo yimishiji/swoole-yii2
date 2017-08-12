@@ -25,39 +25,23 @@ class RpcServer extends HttpServer
 {
     
     /**
-     * @var array 当前配置文件
+     * @inheritdoc
      */
-    public $config = [];
+    public function run($app)
+    {
+        if(is_array($app)){
+            //初始化原子变量，可多进程共用
+            $atomic = ArrayHelper::remove($app,'swooleInit');
+            foreach ($atomic as $item){
+                $functionName = $item['buildTableFunction'];
+                $item['className']::$functionName();
+                //$item['className']::${$item['staticVar']} = new \swoole_atomic($item['defaultValue']);
+            }
+        }
+        
+        return parent::run($app);
+    }
     
-    /**
-     * @var string 缺省文件名
-     */
-    public $indexFile = 'index.php';
-    
-    /**
-     * @var bool 是否开启xhprof调试
-     */
-    public $xhprofDebug = false;
-    
-    /**
-     * @var bool
-     */
-    public $debug = false;
-    
-    /**
-     * @var string
-     */
-    public $root;
-    
-    /**
-     * @var swoole_http_server
-     */
-    public $server;
-    
-    /**
-     * @var string
-     */
-    public $sessionKey = 'JSESSIONID';
     
     /**
      * Worker启动时触发
@@ -116,38 +100,6 @@ class RpcServer extends HttpServer
         $this->app->setServer($this->server);
         $this->app->prepare();
     }
-    
-    public function onWorkerStop()
-    {
-    }
-    
-    /**
-     * 处理异步任务
-     *
-     * @param swoole_server $serv
-     * @param mixed $task_id
-     * @param mixed $from_id
-     * @param string $data
-     */
-    public function onTask($serv, $task_id, $from_id, $data)
-    {
-        //echo "New AsyncTask[id=$task_id]".PHP_EOL;
-        //$serv->finish("$data -> OK");
-        Task::runTask($data, $task_id);
-    }
-    
-    /**
-     * 处理异步任务的结果
-     *
-     * @param swoole_server $serv
-     * @param mixed $task_id
-     * @param string $data
-     */
-    public function onFinish($serv, $task_id, $data)
-    {
-        //echo "AsyncTask[$task_id] Finish: $data".PHP_EOL;
-    }
-    
     
     /**
      * 执行请求
@@ -296,25 +248,4 @@ class RpcServer extends HttpServer
         }
     }
     
-    
-    /**
-     * @param swoole_server $server
-     */
-    public function onServerStart($server)
-    {
-        swoole_timer_tick(2000, function() {
-            echo " swoole_timer_tick output time: ".microtime(true)." \n";
-        });
-    
-
-    
-        echo " rpc servicer 304 serverstart";
-        parent::onServerStart($server);
-    }
-    
-    public function onServerStop()
-    {
-        echo " rpc servicer 310 onServerStop";
-        parent::onServerStop();
-    }
 }
