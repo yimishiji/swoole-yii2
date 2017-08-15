@@ -26,21 +26,24 @@ class SwooleController extends Controller
     
     /**
      * Run swoole rpc server
+     * 不能一次性起多个服务
      *
      * @param string $app Running app
+     *
      * @throws \yii\base\InvalidConfigException
      */
-    public function actionRpc($app=null)
+    public function actionRpc($app)
     {
         $config = Yii::$app->params['swooleServer'];
         $baseRoot = ArrayHelper::remove($config, 'baseRoot');
         
-        $serviceList = $app? [$app] : $config['rpcList'];
-
-        foreach ($serviceList as $name){
-            $conf = require($baseRoot.DIRECTORY_SEPARATOR.$name.DIRECTORY_SEPARATOR.'config/swoole.service.php');
-            $server = new RpcServer;
-            $server->run($conf);
+        if(!in_array($app, $config['rpcList'])){
+            echo "rpc service: {$app} not exists";
+            return 1;
         }
+
+        $conf = require($baseRoot.DIRECTORY_SEPARATOR.$app.DIRECTORY_SEPARATOR.'config/swoole.service.php');
+        $server = new RpcServer;
+        $server->run($conf);
     }
 }
