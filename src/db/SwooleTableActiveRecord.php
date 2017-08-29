@@ -162,9 +162,9 @@ class SwooleTableActiveRecord extends BaseActiveRecord
     public static function updateCountersByKey(string $key, string $column, $incrby=1)
     {
         if($incrby < 0){
-            return static::$swooleTable->incr($key, $column, $incrby);
+            return static::$swooleTable->decr($key, $column, $incrby);
         }else{
-            return static::$swooleTable->decr($key, $column, abs($incrby));
+            return static::$swooleTable->incr($key, $column, abs($incrby));
         }
     }
 }
