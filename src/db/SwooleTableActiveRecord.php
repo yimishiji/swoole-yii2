@@ -6,6 +6,7 @@ use \Swoole\Table;
 use yii\db\BaseActiveRecord;
 use tourze\swoole\yii2\db\Filter;
 use yii\debug\components\search\matchers;
+use yii\helpers\ArrayHelper;
 
 class SwooleTableActiveRecord extends BaseActiveRecord
 {
@@ -30,19 +31,36 @@ class SwooleTableActiveRecord extends BaseActiveRecord
      * 取得内存表所有区块配置信息
      * @return array
      */
-    public static function findAll($params=[])
+    public static function findAll($params=[], $orders=[])
     {
         $filter = new Filter();
 
-        if(isset($params['id'])) {
-            $filter->addMatcher('id', new matchers\SameAs(['value' => $params['id'], 'partial' => false]));
-        }
-        if(isset($params['name'])) {
-            $filter->addMatcher('name', new matchers\SameAs(['value' => $params['name'], 'partial' => true]));
+        foreach ($params as $key=>$value){
+            if(is_array($value) && count($value)==3){
+                list($compare, $attribute, $v) = $value;
+                switch (strtolower($compare)){
+                    case "like":
+                        $filter->addMatcher($attribute, new matchers\SameAs(['value' => $v, 'partial' => true]));
+                        break;
+                    case ">":
+                        $filter->addMatcher($attribute, new matchers\GreaterThan(['value' => $v]));
+                        break;
+                    case "<":
+                        $filter->addMatcher($attribute, new matchers\LowerThan(['value' => $v]));
+                        break;
+                    default:
+                        break;
+                }
+            }elseif(!is_array($value)){
+                $filter->addMatcher($key, new matchers\SameAs(['value' => $value, 'partial' => false]));
+            }
         }
 
-
-        return $filter->filter(static::$swooleTable);
+        //筛选
+        $list = $filter->filter(static::$swooleTable);
+        //排序
+        ArrayHelper::multisort($list, array_keys($orders), array_values($orders));
+        return $list;
     }
 
     public static function primaryKey()
@@ -128,8 +146,25 @@ class SwooleTableActiveRecord extends BaseActiveRecord
      *
      * @return mixed
      */
-    public static function exist($key)
+    public static function existByKey(string $key)
     {
         return static::$swooleTable->exist($key);
+    }
+
+    /**
+     * 增加计数器
+     * @param string $key
+     * @param string $column
+     * @param int $incrby
+     *
+     * @return mixed
+     */
+    public static function updateCountersByKey(string $key, string $column, $incrby=1)
+    {
+        if($incrby < 0){
+            return static::$swooleTable->incr($key, $column, $incrby);
+        }else{
+            return static::$swooleTable->decr($key, $column, abs($incrby));
+        }
     }
 }
