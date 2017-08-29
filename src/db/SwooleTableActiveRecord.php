@@ -152,6 +152,17 @@ class SwooleTableActiveRecord extends BaseActiveRecord
     }
 
     /**
+     * 获取指定key的数据
+     * @param string $key
+     *
+     * @return mixed
+     */
+    public static function findByKey(string $key)
+    {
+        return static::$swooleTable->get($key);
+    }
+
+    /**
      * 增加计数器
      * @param string $key
      * @param string $column
