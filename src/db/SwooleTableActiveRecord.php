@@ -16,9 +16,6 @@ class SwooleTableActiveRecord extends BaseActiveRecord
     //同步时间
     public static $atomicSyncTime;
 
-    //
-    public $_id;
-
     /**
      * 创建内存表
      */
@@ -61,6 +58,17 @@ class SwooleTableActiveRecord extends BaseActiveRecord
         //排序
         ArrayHelper::multisort($list, array_keys($orders), array_values($orders));
         return $list;
+    }
+
+    /**
+     * 生成 key
+     */
+    public function getKey($old=false){
+        $attributes = $old? $this->getOldAttributes() : $this->getAttributes();
+        if(isset($attributes[slef::primaryKey()])){
+            return $attributes[slef::primaryKey()];
+        }
+        throw new NotSupportedException(__METHOD__ . ' is not supported.');
     }
 
     public static function primaryKey()
@@ -123,7 +131,7 @@ class SwooleTableActiveRecord extends BaseActiveRecord
             }
         }
 
-        static::$swooleTable->set($this->_id, $values);
+        static::$swooleTable->set($this->getKey(), $values);
 
         $changedAttributes = array_fill_keys(array_keys($values), null);
         $this->setOldAttributes($values);
@@ -159,7 +167,15 @@ class SwooleTableActiveRecord extends BaseActiveRecord
      */
     public static function findByKey(string $key)
     {
-        return static::$swooleTable->get($key);
+        $row = static::$swooleTable->get($key);
+        if(!$row)
+            return false;
+
+        $class      = get_called_class();
+        $model      = $class::instantiate($row);
+        $modelClass = get_class($model);
+        $modelClass::populateRecord($model, $row);
+        return $model;
     }
 
     /**
@@ -177,5 +193,58 @@ class SwooleTableActiveRecord extends BaseActiveRecord
         }else{
             return static::$swooleTable->incr($key, $column, abs($incrby));
         }
+    }
+
+    /**
+     * 更新
+     * @param bool $runValidation
+     * @param null $attributeNames
+     *
+     * @return bool
+     */
+    public function update($runValidation = true, $attributeNames = null)
+    {
+        if ($runValidation && !$this->validate($attributeNames)) {
+            return false;
+        }
+        $del = static::$swooleTable->del($this->getKey(true));
+        if($del){
+            return static::$swooleTable->set($this->getKey(), array_merge($this->toArray()));
+        }
+        return $del;
+    }
+
+    /**
+     * Updates all documents in the collection using the provided attribute values and conditions.
+     * For example, to change the status to be 1 for all customers whose status is 2:
+     *
+     * ```php
+     * Customer::updateAll(['status' => 1], ['status' => 2]);
+     * ```
+     *
+     * @param array $attributes attribute values (name-value pairs) to be saved into the collection
+     * @param array $condition description of the objects to update.
+     * Please refer to [[Query::where()]] on how to specify this parameter.
+     * @param array $options list of options in format: optionName => optionValue.
+     * @return int the number of documents updated.
+     */
+    public static function updateAll($attributes, $condition = [], $options = [])
+    {
+
+        $models = self::findAll($condition);
+        $return  = false;
+        foreach($models as $row){
+            $class = get_called_class();
+            $model = $class::instantiate($row);
+            $modelClass = get_class($model);
+            $modelClass::populateRecord($model, $row);
+
+            $del = static::$swooleTable->del($model->getKey(true));
+            if($del){
+                $set = static::$swooleTable->set($model->getKey(), array_merge($model->toArray(), $attributes));
+                $return = $return || $set;
+            }
+        }
+        return $return;
     }
 }
