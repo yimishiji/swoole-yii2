@@ -257,16 +257,20 @@ class SwooleTableActiveRecord extends BaseActiveRecord
         $lock = new swoole_lock(SWOOLE_MUTEX);
         $lock->lock();
         $list = self::findAll($condition);
+
+        $return  = true;
         foreach ($list as $item){
             $class      = get_called_class();
             $model      = $class::instantiate($item);
             $modelClass = get_class($model);
             $modelClass::populateRecord($model, $item);
 
-            $model->delete();
+            $res = $model->delete();
+            $return = $return && $res;
         }
         $lock->unlock();
         unset($lock);
+        return $return;
     }
 
     /**
