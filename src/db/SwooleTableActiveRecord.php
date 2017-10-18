@@ -34,25 +34,33 @@ class SwooleTableActiveRecord extends BaseActiveRecord
         $filter = new Filter();
 
         foreach ($params as $key=>$value){
-            if(is_array($value) && count($value)==3){
-                list($compare, $attribute, $v) = $value;
-                switch (strtolower($compare)){
-                    case "like":
-                        $filter->addMatcher($attribute, new matchers\SameAs(['value' => $v, 'partial' => true]));
-                        break;
-                    case ">":
-                        $filter->addMatcher($attribute, new matchers\GreaterThan(['value' => $v]));
-                        break;
-                    case "<":
-                        $filter->addMatcher($attribute, new matchers\LowerThan(['value' => $v]));
-                        break;
-                    default:
-                        break;
+            if(is_array($value)){
+                if(count($value)==3 && is_int($key)){
+                    list($compare, $attribute, $v) = $value;
+                    switch (strtolower($compare)){
+                        case "like":
+                            $filter->addMatcher($attribute, new matchers\SameAs(['value' => $v, 'partial' => true]));
+                            break;
+                        case ">":
+                            $filter->addMatcher($attribute, new matchers\GreaterThan(['value' => $v]));
+                            break;
+                        case "<":
+                            $filter->addMatcher($attribute, new matchers\LowerThan(['value' => $v]));
+                            break;
+                        case "in":
+                            $filter->addMatcher($attribute, new MatchersIn(['value' => $v]));
+                            break;
+                        default:
+                            break;
+                    }
+                }else{
+                    $filter->addMatcher($key, new MatchersIn(['value' => $value]));
                 }
+
             }elseif(!is_array($value)){
                 $filter->addMatcher($key, new matchers\SameAs(['value' => $value, 'partial' => false]));
             }elseif(is_array($value)){
-                $filter->addMatcher($key, new MatchersIn(['value' => $value]));
+
             }
         }
 
