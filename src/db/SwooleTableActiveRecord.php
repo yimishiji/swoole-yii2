@@ -247,4 +247,43 @@ class SwooleTableActiveRecord extends BaseActiveRecord
         }
         return $return;
     }
+
+    /**
+     * 删除所有符合条件的记录
+     * @param null $condition
+     */
+    public static function deleteAll($condition = null)
+    {
+        $lock = new swoole_lock(SWOOLE_MUTEX);
+        $lock->lock();
+        $list = self::findAll($condition);
+        foreach ($list as $item){
+            $class      = get_called_class();
+            $model      = $class::instantiate($item);
+            $modelClass = get_class($model);
+            $modelClass::populateRecord($model, $item);
+
+            $model->delete();
+        }
+        $lock->unlock();
+        unset($lock);
+    }
+
+    /**
+     * 删除指定key的记录
+     * @param null $condition
+     */
+    public static function deleteByKey($key)
+    {
+        return static::$swooleTable->del($key);
+    }
+
+    /**
+     * 删除
+     * @return mixed
+     */
+    public function delete()
+    {
+        return self::deleteByKey($this->getKey());
+    }
 }
