@@ -3,6 +3,7 @@
 namespace tourze\swoole\yii2\db;
 
 use \Swoole\Table;
+use \Swoole\lock;
 use yii\db\BaseActiveRecord;
 use tourze\swoole\yii2\db\Filter;
 use yii\debug\components\search\matchers;
@@ -50,6 +51,8 @@ class SwooleTableActiveRecord extends BaseActiveRecord
                 }
             }elseif(!is_array($value)){
                 $filter->addMatcher($key, new matchers\SameAs(['value' => $value, 'partial' => false]));
+            }elseif(is_array($value)){
+                $filter->addMatcher($key, new MatchersIn(['value' => $value]));
             }
         }
 
@@ -254,7 +257,7 @@ class SwooleTableActiveRecord extends BaseActiveRecord
      */
     public static function deleteAll($condition = null)
     {
-        $lock = new swoole_lock(SWOOLE_MUTEX);
+        $lock = new Lock(SWOOLE_MUTEX);
         $lock->lock();
         $list = self::findAll($condition);
 
