@@ -251,18 +251,6 @@ class RpcServer extends HttpServer
     }
 
     /**
-     * @param swoole_server $server
-     */
-    public function onServerStart($server)
-    {
-        parent::onServerStart($server);
-        if ($this->pidFile)
-        {
-            file_put_contents($this->pidFile, ',' . $server->manager_pid, FILE_APPEND);
-        }
-    }
-
-    /**
      * 服务是否已启动
      *
      * @return bool
