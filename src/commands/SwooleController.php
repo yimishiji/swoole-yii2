@@ -75,12 +75,19 @@ class SwooleController extends Controller
 
         //选择应用
         while (!(in_array($app, $service))) {
-            $appId = $this->select("plase select $commond rpcService\n", $service);
+            $appId = $this->select("plase select $commond rpcService, port:".($this->port?$this->port:'default')."\n", $service);
             $app   = isset($service[$appId]) ? $service[$appId] : '';
         }
 
-        $conf = require($baseRoot.DIRECTORY_SEPARATOR.$app.DIRECTORY_SEPARATOR.'config/swoole.service.php');
-        $appConf = require($baseRoot.DIRECTORY_SEPARATOR.$app.DIRECTORY_SEPARATOR.'config/yii.application.php');
+        $rpcConfigFile = $baseRoot.DIRECTORY_SEPARATOR.$app.DIRECTORY_SEPARATOR.'config/swoole.service.php';
+        $appConfigFile = $baseRoot.DIRECTORY_SEPARATOR.$app.DIRECTORY_SEPARATOR.'config/yii.application.php';
+        if(!file_exists($appConfigFile) || !file_exists($rpcConfigFile) ){
+            $this->resOut("service config (config/swoole.service.php;config/yii.application.php) not exists",  Console::FG_RED);
+            return 1;
+        }
+        $conf = require($rpcConfigFile);
+        $appConf = require($appConfigFile);
+
 
         if($this->port){
             $conf['port'] = $this->port;
