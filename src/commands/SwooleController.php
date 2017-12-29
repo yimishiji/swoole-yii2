@@ -230,32 +230,6 @@ class SwooleController extends Controller
         $this->stdout("\n\n");
     }
 
-
-
-    /**
-     * 服务是否已启动
-     *
-     * @return bool
-     */
-    public function isRunning($port)
-    {
-        $masterIsLive = false;
-        $pFile = "/tmp/swoft.pid";
-
-        // pid 文件是否存在
-        if (file_exists($pFile)) {
-            // 文件内容解析
-            $pidFile = file_get_contents($pFile);
-            $pids = explode(',', $pidFile);
-
-            $this->serverSetting['masterPid'] = $pids[0];
-            $this->serverSetting['managerPid'] = $pids[1];
-            $masterIsLive = $this->serverSetting['masterPid'] && @posix_kill($this->serverSetting['managerPid'], 0);
-        }
-
-        return $masterIsLive;
-    }
-
     /**
      * 动态参数
      * @param string $actionID
