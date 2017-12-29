@@ -57,7 +57,9 @@ class SwooleController extends Controller
         $baseRoot = ArrayHelper::remove($config, 'baseRoot');
 
         $service = scandir($baseRoot);
-        $service = array_diff($service, ['.', '..']);
+        $service = array_filter($service, function ($a){
+            return strpos($a, '.')!==0;
+        });
         sort($service);
 
         if(array_key_exists($app, $this->rpcCommonds)){
