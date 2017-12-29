@@ -186,7 +186,7 @@ class SwooleController extends Controller
     private function rpcHelp($baseRoot, $service){
         $len = 30;
         $this->stdout($this->ansiFormat("Used\n", Console::FG_YELLOW));
-        $this->stdout('    ' .$this->ansiFormat("php yii swoole/rpc [RpcService|Command] [Command] [-Options optionValue ...] \n",  Console::FG_PURPLE.';'.Console::BOLD));
+        $this->stdout('    ' .$this->ansiFormat("php yii swoole/rpc [RpcService|Command] [Command] [-Options==Value ...] \n",  Console::FG_PURPLE));
 
         $this->stdout("\n");
         $this->stdout($this->ansiFormat("RpcServiceLists\n", Console::FG_YELLOW));
