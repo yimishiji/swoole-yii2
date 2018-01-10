@@ -5,7 +5,7 @@ namespace tourze\swoole\yii2\server;
 use swoole_http_request;
 use swoole_http_response;
 use swoole_http_server;
-use swoole_server;
+use swoole\server;
 use tourze\swoole\yii2\RpcApplication;
 use tourze\swoole\yii2\async\Task;
 use tourze\swoole\yii2\Container;
@@ -40,11 +40,68 @@ class RpcServer extends HttpServer
                 //$item['className']::${$item['staticVar']} = new \swoole_atomic($item['defaultValue']);
             }
         }
-        
-        return parent::run($app);
+
+        $this->config = is_array($app) ? $app : (array) Yii::$app->params['swooleHttp'][$app];
+        if (isset($this->config['xhprofDebug']))
+        {
+            $this->xhprofDebug = $this->config['xhprofDebug'];
+        }
+        if (isset($this->config['debug']))
+        {
+            $this->debug = $this->config['debug'];
+        }
+        $this->root = $this->config['root'];
+        $this->server = new Server($this->config['host'], $this->config['port']);
+
+        $this->server->on('start', [$this, 'onServerStart']);
+        $this->server->on('workerStart', [$this, 'onWorkerStart']);
+        $this->server->on('managerStart', [$this, 'onManagerStart']);
+        $this->server->on('task', [$this, 'onTask']);
+        $this->server->on('shutdown', [$this, 'onServerStop']);
+        $this->server->on('finish', [$this, 'onFinish']);
+
+        //  $this->server->on('request', [$this, 'onRequest']);
+        $this->server->on('receive', [$this, 'onReceive']);
+        $this->server->on('pipeMessage', [$this, 'onPipeMessage']);
+
+
+        $this->server->set($this->config['server']);
+        $this->server->start();
+        //return parent::run($app);
     }
-    
-    
+
+
+    /**
+     * RPC请求每次启动一个协程来处理
+     *
+     * @param Server $server
+     * @param int    $fd
+     * @param int    $fromId
+     * @param string $data
+     */
+    public function onReceive(Server $server, int $fd, int $fromId, string $data)
+    {
+        $data = json_decode($data,true);
+        print_r($data);
+        $server->send($fd, json_encode(['dddd']));
+        //App::getDispatcherService()->doDispatcher($server, $fd, $fromId, $data);
+    }
+
+    /**
+     * 管道消息处理
+     *
+     * @param Server $server
+     * @param int    $fromWorkerId
+     * @param string $message
+     */
+    public function onPipeMessage(Server $server, int $fromWorkerId, string $message)
+    {
+        list($type, $data) = PipeMessage::unpack($message);
+        if ($type == PipeMessage::TYPE_TASK) {
+            $this->onPipeMessageTask($data);
+        }
+    }
+
     /**
      * Worker启动时触发
      *
