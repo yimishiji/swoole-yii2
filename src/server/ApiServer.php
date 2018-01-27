@@ -23,7 +23,7 @@ use api\components\utils\YMLog;
  */
 class ApiServer extends HttpServer
 {
-    use serverTrait;
+    use ServerTrait;
     public      $errMsg;
     
     /**

@@ -25,7 +25,7 @@ use api\components\utils\YMLog;
  */
 class RpcServer extends \Swoole\Protocol\RPCServer
 {
-    use serverTrait;
+    use ServerTrait;
 
     /**
      * @var 配置
