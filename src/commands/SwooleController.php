@@ -3,6 +3,7 @@
 namespace tourze\swoole\yii2\commands;
 
 use tourze\swoole\yii2\server\HttpServer;
+use tourze\swoole\yii2\server\ApiServer;
 use tourze\swoole\yii2\server\RpcServer;
 use Yii;
 use yii\console\Controller;
@@ -11,6 +12,8 @@ use yii\helpers\Console;
 
 class SwooleController extends Controller
 {
+    public $serverName = '\tourze\swoole\yii2\server\ApiServer';
+
     /**
      * @var 端口
      */
@@ -21,12 +24,19 @@ class SwooleController extends Controller
      */
     public $helpHand;
 
+    /**
+     * @var 启动命令
+     */
     public $rpcCommonds = ['start'=>'start rpc service (default)',
                            'reload'=>'reload rpc service',
                            'stop'=>'shutdown rpc service',
                            'restart'=>'restart rpc service',
                         ];
 
+    /**
+     * @var 持久化
+     */
+    public $daemonize;
 
     /**
      * Run swoole http server
@@ -40,9 +50,22 @@ class SwooleController extends Controller
         $server = new HttpServer;
         $server->run($app);
     }
+
+    /**
+     * swoole api server RPC 协议服务
+     * @param null   $app
+     * @param string $commond
+     *
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function actionRpcs($app=null, $commond='start')
+    {
+        $this->serverName = '\tourze\swoole\yii2\server\RpcServer';
+        $this->actionRpc($app, $commond);
+    }
     
     /**
-     * swoole rpc server
+     * swoole rpc server RPC接口服务
      * @desp 一次只能开启一个服务
      *
      * @param string $app service name
@@ -95,7 +118,13 @@ class SwooleController extends Controller
             $conf['port'] = $this->port;
         }
 
-        $server = new RpcServer;
+        if($this->daemonize){
+            $conf['server']['daemonize'] = (bool)$this->daemonize;
+        }
+
+
+        $conf['serverName'] = $app;
+        $server = new $this->serverName;
         $server->pidFile = "/tmp/rpc_{$conf['port']}.pid";
 
         //关闭服务
@@ -219,7 +248,7 @@ class SwooleController extends Controller
 
         $this->stdout("\n");
         $this->stdout($this->ansiFormat("Options\n", Console::FG_YELLOW));
-        $commonds = ['-p'=>'swoole service port', '-h'=> 'show help'];
+        $commonds = ['-p'=>'swoole service port', '-h'=> 'show help', '-d' => 'daemonize',];
         foreach ($commonds as $com=>$desp) {
             $this->stdout('    '.$this->ansiFormat($com, Console::FG_GREEN));
             $this->stdout(str_repeat(' ', $len + 4 - strlen($com)));
@@ -239,8 +268,8 @@ class SwooleController extends Controller
     public function options($actionID)
     {
         $parentOptions = parent::options($actionID);
-        if($actionID=='rpc'){
-            $parentOptions = ['port', 'helpHand'];
+        if($actionID=='rpc' || $actionID=='rpcs' ){
+            $parentOptions = ['port', 'helpHand', 'daemonize'];
         }
 
         return $parentOptions;
@@ -255,6 +284,7 @@ class SwooleController extends Controller
         return array_merge(parent::optionAliases(), [
             'p' => 'port',
             'h' => 'helpHand',
+            'd' => 'daemonize',
         ]);
     }
 }
