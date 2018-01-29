@@ -69,7 +69,7 @@ class RPC extends \Swoole\Client\RPC
 
         //请求超时处理
         if($retObj->code==RPC_Result::ERR_TIMEOUT && $this->_on['timeout']){
-            call_user_func_array($this->_on['timeout'], $retObj);
+            call_user_func_array($this->_on['timeout'], [$retObj]);
         }
 
     }
