@@ -47,6 +47,7 @@ class RPC extends \Swoole\Client\RPC
         $events = [
             'onConnectServerFailed' => '连接服务器失败事件,传入连接失败的服务[ip,port]',
             'getServer' => '获取可用服务器事件，传入serName',
+            'timeout' => 'rpc请求超时事件，传入rpc_result',
         ];
 
         if(!array_key_exists($event, $events)){
@@ -54,6 +55,23 @@ class RPC extends \Swoole\Client\RPC
         }
 
         $this->_on[$event] = $callback;
+    }
+
+    /**
+     * @param $host
+     * @param $port
+     *
+     * @return bool|void
+     */
+    protected function afterRequest($retObj)
+    {
+        parent::afterRequest($retObj);
+
+        //请求超时处理
+        if($retObj->code==RPC_Result::ERR_TIMEOUT && $this->_on['timeout']){
+            call_user_func_array($this->_on['timeout'], $retObj);
+        }
+
     }
 
     /**
