@@ -96,6 +96,7 @@ class RpcServer extends \Swoole\Protocol\RPCServer
         $server = Swoole\Network\Server::autoCreate($AppSvr->config['host'], $AppSvr->config['port']);
         $server::setPidFile($this->pidFile);
         $server->setProtocol($AppSvr);
+        $server->setProcessName('swoole-rpcs');
         //$server->daemonize(); //作为守护进程
         $server->run(array_merge(array(
                 'worker_num' => 4,
