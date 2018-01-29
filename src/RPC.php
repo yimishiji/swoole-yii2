@@ -175,7 +175,7 @@ class RPC extends \Swoole\Client\RPC
             return parent::recvPacket($connection);
         } catch (Exception $e) {
             printf("Timeout: %s\n", $e->getMessage());
-            return false;
+            return "";
         }
     }
 
