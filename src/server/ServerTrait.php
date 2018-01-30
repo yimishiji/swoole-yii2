@@ -41,9 +41,13 @@ trait ServerTrait
         $startTime = time();
         $this->masterPid && posix_kill($this->masterPid, SIGTERM);
 
+        $i=0
         $result = true;
         while (1) {
-            $masterIslive = $this->masterPid && posix_kill($this->masterPid, SIGTERM);
+            //尝试10次仍不成功则强制中止进程
+            $signal = (++$i>10)? SIGKILL : SIGTERM;
+
+            $masterIslive = $this->masterPid && posix_kill($this->masterPid, $signal);
 
             if ($masterIslive) {
                 if (time() - $startTime >= $timeout) {
