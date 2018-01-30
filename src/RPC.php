@@ -315,7 +315,7 @@ class RPC extends \Swoole\Client\RPC
         return $success_num;
     }
 
-    protected function closeService($retObj)
+    protected function closeService(RPC_Result $retObj)
     {
         //回调服务器连接失败方法
         if($this->_on['onConnectServerFailed']){
