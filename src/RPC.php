@@ -17,10 +17,6 @@ class RPC extends \Swoole\Client\RPC
 {
     public $connectionTimeout = 0.05;
 
-    public $onConnectServerFailedFunction;
-
-    public $getServerFunction;
-
     public $serName;
 
     private $_on;
@@ -69,7 +65,10 @@ class RPC extends \Swoole\Client\RPC
 
         //连接失败
         if($retObj->code==RPC_Result::ERR_CONNECT){
-            $this->onConnectServerFailed();
+            //回调服务器连接失败方法
+            if($this->_on['onConnectServerFailed']){
+                call_user_func_array($this->_on['onConnectServerFailed'], [$svr]);
+            }
         }
 
         //请求超时处理
@@ -87,13 +86,55 @@ class RPC extends \Swoole\Client\RPC
      */
     protected function connectToServer($retObj)
     {
-
         if($this->_on['getServer']){
             $this->servers =  call_user_func_array($this->_on['getServer'], [$this->serName]);
         }
 
-        return parent::connectToServer($retObj);
+        $servers = $this->servers;
+
+        //循环连接
+        while (count($servers) > 0)
+        {
+            $svr = $this->getServer($servers);
+            if (empty($svr))
+            {
+                return false;
+            }
+            $socket = $this->getConnection($svr['host'], $svr['port']);
+            //连接失败，服务器节点不可用
+            //TODO 如果连接失败，需要上报机器存活状态
+            if ($socket === false)
+            {
+                foreach($servers as $k => $v)
+                {
+                    if ($v['host'] == $svr['host'] and $v['port'] == $svr['port'])
+                    {
+                        //从Server列表中移除
+                        unset($servers[$k]);
+
+                        //回调服务器连接失败方法
+                        if($this->_on['onConnectServerFailed']){
+                            call_user_func_array($this->_on['onConnectServerFailed'], [$svr]);
+                        }
+
+                    }
+                }
+                if ($this->keepSocket) {
+                    //若连接失败，则清除掉该server
+                    $this->keepSocketServer = array();
+                }
+            }
+            else
+            {
+                $retObj->socket = $socket;
+                $retObj->server_host = $svr['host'];
+                $retObj->server_port = $svr['port'];
+                return true;
+            }
+        }
+        return false;
     }
+
 
     /**
      * 连接rpc服务器
@@ -161,23 +202,6 @@ class RPC extends \Swoole\Client\RPC
         {
             return false;
         }
-    }
-
-    /**
-     * 连接服务器失败了,
-     * @param $svr
-     * @return bool
-     */
-    function onConnectServerFailed($svr)
-    {
-        parent::onConnectServerFailed($svr);
-
-        //回调服务器连接失败方法
-        if($this->_on['onConnectServerFailed']){
-            call_user_func_array($this->_on['onConnectServerFailed'], [$svr]);
-        }
-
-        return false;
     }
 
     /**
