@@ -35,17 +35,16 @@ trait ServerTrait
     /**
      * stop服务
      */
-    public function stop()
-    {
-        $timeout = 60;
+    public function stop() {
+        $timeout   = 60;
         $startTime = time();
         $this->masterPid && posix_kill($this->masterPid, SIGTERM);
 
-        $i=0
+        $i      = 0;
         $result = true;
         while (1) {
             //尝试10次仍不成功则强制中止进程
-            $signal = (++$i>10)? SIGKILL : SIGTERM;
+            $signal = (++$i > 10) ? SIGKILL : SIGTERM;
 
             $masterIslive = $this->masterPid && posix_kill($this->masterPid, $signal);
 
@@ -60,6 +59,7 @@ trait ServerTrait
 
             break;
         }
+
         return $result;
     }
 
