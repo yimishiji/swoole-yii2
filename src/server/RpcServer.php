@@ -93,12 +93,12 @@ class RpcServer extends \Swoole\Protocol\RPCServer
        // $AppSvr->addAllowUser('chelun', 'chelun@123456');
 
         Swoole\Error::$echo_html = false;
-        $server = Swoole\Network\Server::autoCreate($AppSvr->config['host'], $AppSvr->config['port']);
-        $server::setPidFile($this->pidFile);
-        $server->setProtocol($AppSvr);
-        $server->setProcessName('swoole-rpcs');
+        $this->server = Swoole\Network\Server::autoCreate($AppSvr->config['host'], $AppSvr->config['port']);
+        $this->server::setPidFile($this->pidFile);
+        $this->server->setProtocol($AppSvr);
+        $this->server->setProcessName('swoole-rpcs');
         //$server->daemonize(); //作为守护进程
-        $server->run(array_merge(array(
+        parent::run(array_merge(array(
                 'worker_num' => 4,
                 'max_request' => 5000,
                 'dispatch_mode' => 3,
