@@ -66,9 +66,7 @@ class RPC extends \Swoole\Client\RPC
         //连接失败
         if($retObj->code==RPC_Result::ERR_CONNECT){
             //回调服务器连接失败方法
-            if($this->_on['onConnectServerFailed']){
-                call_user_func_array($this->_on['onConnectServerFailed'], [$svr]);
-            }
+            $this->closeService($retObj);
         }
 
         //请求超时处理
@@ -113,9 +111,9 @@ class RPC extends \Swoole\Client\RPC
                         unset($servers[$k]);
 
                         //回调服务器连接失败方法
-                        if($this->_on['onConnectServerFailed']){
-                            call_user_func_array($this->_on['onConnectServerFailed'], [$svr]);
-                        }
+                        $retObj->server_host = $svr['host'];
+                        $retObj->server_port = $svr['port'];
+                        $this->closeService($retObj);
 
                     }
                 }
@@ -271,6 +269,7 @@ class RPC extends \Swoole\Client\RPC
                         {
                             if ($retObj->socket == $connection)
                             {
+                                $this->closeService($retObj);
                                 $retObj->code = RPC_Result::ERR_CLOSED;
                                 unset($this->waitList[$retObj->requestId]);
                                 $this->closeConnection($retObj->server_host, $retObj->server_port);
@@ -314,5 +313,14 @@ class RPC extends \Swoole\Client\RPC
         $this->waitList = array();
         $this->requestIndex = 0;
         return $success_num;
+    }
+
+    protected function closeService($retObj)
+    {
+        //回调服务器连接失败方法
+        if($this->_on['onConnectServerFailed']){
+            call_user_func_array($this->_on['onConnectServerFailed'], [$retObj]);
+        }
+
     }
 }
