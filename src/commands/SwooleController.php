@@ -36,7 +36,7 @@ class SwooleController extends Controller
     /**
      * @var 持久化
      */
-    public $daemonize;
+    public $daemonize = null;
 
     /**
      * Run swoole http server
@@ -118,10 +118,9 @@ class SwooleController extends Controller
             $conf['port'] = $this->port;
         }
 
-        if($this->daemonize){
+        if($this->daemonize !== null){
             $conf['server']['daemonize'] = (bool)$this->daemonize;
         }
-
 
         $conf['serverName'] = $app;
         $server = new $this->serverName;
