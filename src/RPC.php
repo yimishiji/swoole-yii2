@@ -67,6 +67,11 @@ class RPC extends \Swoole\Client\RPC
     {
         parent::afterRequest($retObj);
 
+        //连接失败
+        if($retObj->code==RPC_Result::ERR_CONNECT){
+            $this->onConnectServerFailed();
+        }
+
         //请求超时处理
         if($retObj->code==RPC_Result::ERR_TIMEOUT && $this->_on['timeout']){
             call_user_func_array($this->_on['timeout'], [$retObj]);
