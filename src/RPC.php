@@ -21,6 +21,9 @@ class RPC extends \Swoole\Client\RPC
 
     private $_on;
 
+    //开启协程
+    public $userCoroutineClient = false;
+
     /**
      * 加入属性服务名称
      * RPC constructor.
@@ -153,15 +156,19 @@ class RPC extends \Swoole\Client\RPC
         if ($this->haveSwoole)
         {
             echo "--$conn_key++\n";
-            $socket = new \swoole_client(SWOOLE_SOCK_TCP | SWOOLE_KEEP, SWOOLE_SOCK_SYNC);
-            $socket->set(array(
-                             'open_length_check' => true,
-                             'package_max_length' => $this->packet_maxlen,
-                             'package_length_type' => 'N',
-                             'package_body_offset' => RPCServer::HEADER_SIZE,
-                             'package_length_offset' => 0,
-                         ));
-            //$socket = new Swoole\Coroutine\Client(SWOOLE_SOCK_TCP);
+            if($this->userCoroutineClient){
+                $socket = new Swoole\Coroutine\Client(SWOOLE_SOCK_TCP);
+            }else{
+                $socket = new \swoole_client(SWOOLE_SOCK_TCP | SWOOLE_KEEP, SWOOLE_SOCK_SYNC);
+                $socket->set(array(
+                                 'open_length_check' => true,
+                                 'package_max_length' => $this->packet_maxlen,
+                                 'package_length_type' => 'N',
+                                 'package_body_offset' => RPCServer::HEADER_SIZE,
+                                 'package_length_offset' => 0,
+                             ));
+            }
+
 
             /**
              * 尝试重连一次
@@ -208,6 +215,10 @@ class RPC extends \Swoole\Client\RPC
      */
     protected function recvPacket($connection)
     {
+        if($this->userCoroutineClient){
+            return $connection->recv();
+        }
+
         if(!extension_loaded('pcntl')){
             return parent::recvPacket($connection);
         }
@@ -322,5 +333,23 @@ class RPC extends \Swoole\Client\RPC
             call_user_func_array($this->_on['onConnectServerFailed'], [$retObj]);
         }
 
+    }
+
+
+    /**
+     * select等待数据接收事件
+     * @param $read
+     * @param $write
+     * @param $error
+     * @param $timeout
+     * @return int
+     */
+    protected function select($read, $write, $error, $timeout)
+    {
+        if(!$this->userCoroutineClient){
+            return parent::select($read, $write, $error, $timeout);
+        }else{
+            return 1;
+        }
     }
 }
