@@ -155,7 +155,6 @@ class RPC extends \Swoole\Client\RPC
         //基于Swoole扩展
         if ($this->haveSwoole)
         {
-            echo "--$conn_key++\n";
             if($this->userCoroutineClient){
                 $socket = new Swoole\Coroutine\Client(SWOOLE_SOCK_TCP);
             }else{

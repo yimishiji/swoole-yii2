@@ -6,6 +6,7 @@ use swoole_http_request;
 use swoole_http_response;
 use swoole_http_server;
 use Swoole;
+use tourze\swoole\yii2\async\RpcTask;
 use tourze\swoole\yii2\RpcApplication;
 use tourze\swoole\yii2\async\Task;
 use tourze\swoole\yii2\Container;
@@ -93,7 +94,7 @@ class RpcServer extends \Swoole\Protocol\RPCServer
        // $AppSvr->addAllowUser('chelun', 'chelun@123456');
 
         Swoole\Error::$echo_html = false;
-        $this->server = Swoole\Network\Server::autoCreate($AppSvr->config['host'], $AppSvr->config['port']);
+        $this->server = RpcNetworkServer::autoCreate($AppSvr->config['host'], $AppSvr->config['port']);
         $this->server::setPidFile($this->pidFile);
         $this->server->setProtocol($AppSvr);
         $this->server->setProcessName('swoole-rpcs');
