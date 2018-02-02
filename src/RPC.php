@@ -24,6 +24,8 @@ class RPC extends \Swoole\Client\RPC
     //开启协程
     public $userCoroutineClient = false;
 
+    protected $packet_maxlen = 5097152;   //最大不超过5M的数据包
+
     /**
      * 加入属性服务名称
      * RPC constructor.
@@ -214,20 +216,24 @@ class RPC extends \Swoole\Client\RPC
      */
     protected function recvPacket($connection)
     {
-        if($this->userCoroutineClient){
-            return $connection->recv();
-        }
-
         if(!extension_loaded('pcntl')){
-            return parent::recvPacket($connection);
+            if($this->haveSwoole){
+                return $connection->recv($this->packet_maxlen);
+            }else{
+                return parent::recvPacket($connection);
+            }
         }
 
-        declare(ticks = 1);  // 设置闹钟信号处理，抛异常退出循环
+        // 设置闹钟信号处理，抛异常退出循环
+        declare(ticks = 1);
         pcntl_signal(SIGALRM, function(){throw new Exception('process_timeout');});
         pcntl_alarm(5);// 设置闹钟，5秒超时
-
         try {
-            return parent::recvPacket($connection);
+            if ($this->haveSwoole){
+                return $connection->recv($this->packet_maxlen);
+            }else{
+                return parent::recvPacket($connection);
+            }
         } catch (Exception $e) {
             printf("Timeout: %s\n", $e->getMessage());
             return "";
@@ -279,7 +285,9 @@ class RPC extends \Swoole\Client\RPC
                         {
                             if ($retObj->socket == $connection)
                             {
-                                $this->closeService($retObj);
+                                //返回数据超长被关闭
+                                //$this->closeService($retObj);
+
                                 $retObj->code = RPC_Result::ERR_CLOSED;
                                 unset($this->waitList[$retObj->requestId]);
                                 $this->closeConnection($retObj->server_host, $retObj->server_port);
