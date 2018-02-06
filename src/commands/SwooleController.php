@@ -9,6 +9,7 @@ use Yii;
 use yii\console\Controller;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Console;
+use yii\helpers\FileHelper;
 
 class SwooleController extends Controller
 {
@@ -124,7 +125,7 @@ class SwooleController extends Controller
 
         $conf['serverName'] = $app;
         $server = new $this->serverName;
-        $server->pidFile = "/tmp/rpc_{$conf['port']}.pid";
+        $server->pidFile = $this->getPidPath()."/rpc_{$conf['port']}.pid";
 
         //关闭服务
         if($commond=='stop'){
@@ -285,5 +286,20 @@ class SwooleController extends Controller
             'h' => 'helpHand',
             'd' => 'daemonize',
         ]);
+    }
+
+    /**
+     * 获取pid文件保存目录
+     * @return string
+     * @throws \yii\base\Exception
+     */
+    public function getPidPath()
+    {
+        $path = Yii::$app->getRuntimePath() . '/swoole-rpc';
+        if (!is_dir($path)) {
+            FileHelper::createDirectory($path, 0775, true);
+        }
+
+        return $path;
     }
 }
