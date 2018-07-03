@@ -39,6 +39,8 @@ class ApiServer extends HttpServer
                 $item['className']::$functionName();
                 //$item['className']::${$item['staticVar']} = new \swoole_atomic($item['defaultValue']);
             }
+            
+            $this->name =  'swoole-server:'.$app['serverName'];
         }
 
         return parent::run($app);
