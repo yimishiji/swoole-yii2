@@ -47,6 +47,10 @@ class Filter extends Component
     {
         $filtered = [];
         foreach ($data as $row) {
+            if(!is_array($row)){
+                throw new \ErrorException('Check whether the machine is installed pcre-devel');
+            }
+
             if ($this->passesFilter($row)) {
                 $filtered[] = $row;
             }

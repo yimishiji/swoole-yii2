@@ -33,6 +33,10 @@ class SwooleTableActiveRecord extends BaseActiveRecord
     {
         $filter = new Filter();
 
+        if(self::count()==0){
+            return [];
+        }
+
         foreach ($params as $key=>$value){
             if(is_array($value)){
                 if(count($value)==3 && is_int($key)){
@@ -300,5 +304,14 @@ class SwooleTableActiveRecord extends BaseActiveRecord
     public function delete()
     {
         return self::deleteByKey($this->getKey());
+    }
+
+    /**
+     * 删除
+     * @return mixed
+     */
+    public static function count()
+    {
+        return static::$swooleTable->count();
     }
 }
