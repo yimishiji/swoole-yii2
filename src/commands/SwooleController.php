@@ -123,6 +123,10 @@ class SwooleController extends Controller
             $conf['server']['daemonize'] = (bool)$this->daemonize;
         }
 
+        if(!$conf['server']['daemonize']){
+            $conf['server']['log_file'] = null;
+        }
+
         $conf['serverName'] = $app;
         $server = new $this->serverName;
         $server->pidFile = $this->getPidPath()."/rpc_{$conf['port']}.pid";
