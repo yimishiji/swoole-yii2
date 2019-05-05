@@ -60,7 +60,12 @@ class ApiServer extends HttpServer
         $_SERVER['SERVER_NAME'] = 'localhost';
         $_SERVER['REQUEST_URI'] = $_SERVER['SCRIPT_FILENAME'] = $_SERVER['DOCUMENT_ROOT'] = $_SERVER['DOCUMENT_URI'] = $_SERVER['SCRIPT_NAME'] = '';
 
-        $this->setProcessTitle($this->name . ': worker');
+
+        if($worker_id >= $this->config['worker_num']){
+            $this->setProcessTitle($this->name . ': task');
+        }else{
+            $this->setProcessTitle($this->name . ': worker');
+        }
         // 关闭Yii2自己实现的异常错误
         defined('YII_ENABLE_ERROR_HANDLER') || define('YII_ENABLE_ERROR_HANDLER', false);
         // 每个worker都创建一个独立的app实例
