@@ -58,6 +58,8 @@ class HttpServer extends Server
      */
     public $sessionKey = 'JSESSIONID';
 
+    public $assetsRoot;
+
     /**
      * @inheritdoc
      */
@@ -73,6 +75,7 @@ class HttpServer extends Server
             $this->debug = $this->config['debug'];
         }
         $this->root = $this->config['root'];
+        $this->assetsRoot = $this->config['assetsRoot']??"";
         $this->server = new swoole_http_server($this->config['host'], $this->config['port']);
 
         $this->server->on('start', [$this, 'onServerStart']);

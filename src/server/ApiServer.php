@@ -131,8 +131,7 @@ class ApiServer extends HttpServer
         }
 
         $uri = $request->server['request_uri'];
-        $file = $this->root . $uri;
-        if ($uri != '/' && is_file($file) && pathinfo($file, PATHINFO_EXTENSION) != 'php')
+        if ($this->assetsRoot && $uri != '/' && $file = $hist->assetsRoot.$uri && is_file($file) && pathinfo($file, PATHINFO_EXTENSION) != 'php')
         {
             // 非php文件, 最好使用nginx来输出
             $response->header('Content-Type', FileHelper::getMimeTypeByExtension($file));
