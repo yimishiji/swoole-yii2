@@ -61,7 +61,7 @@ class ApiServer extends HttpServer
         $_SERVER['REQUEST_URI'] = $_SERVER['SCRIPT_FILENAME'] = $_SERVER['DOCUMENT_ROOT'] = $_SERVER['DOCUMENT_URI'] = $_SERVER['SCRIPT_NAME'] = '';
 
 
-        if($worker_id >= $this->config['worker_num']){
+        if($worker_id >= $this->config['server']['worker_num']){
             $this->setProcessTitle($this->name . ': task');
         }else{
             $this->setProcessTitle($this->name . ': worker');
