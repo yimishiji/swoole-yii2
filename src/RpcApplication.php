@@ -21,7 +21,8 @@ use yii\base\Widget;
 class RpcApplication extends Application
 {
     public $appInit;
-    
+    public $worker_id;
+
     /**
      * 初始化流程
      *

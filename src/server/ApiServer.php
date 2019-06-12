@@ -257,4 +257,16 @@ class ApiServer extends HttpServer
     }
 
 
+    /**
+     * 进程停止事件
+     */
+    public function onWorkerStop()
+    {
+        echo "WorkerStop, worker_id:".Yii::$app->worker_id."======\n";
+        if(Yii::$app->worker_id==1){
+            echo "master sync date worker stop, app server shutdown\n";
+            Yii::$app->getServer()->shutdown();
+        }
+    }
+
 }
